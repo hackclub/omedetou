@@ -66,11 +66,7 @@ function read_csv (s) {
 }
 
 function print_out (content) {
-  let print_window = window.open('','','width=800,height=600');
-  print_window.document.title = 'Print';
-  let style = document.createElement('style');
-  style.textContent = print_style;
-  print_window.document.head.appendChild(style);
+  let multi_all = [];
   // single note
   if (csv_data === undefined) {
     try {
@@ -80,7 +76,7 @@ function print_out (content) {
       return;
     }
     for (const element of all) {
-      print_window.document.body.appendChild(element);
+      multi_all.push(element);
     }
   }
   // multiple notes
@@ -101,8 +97,16 @@ function print_out (content) {
       for (const element of all) {
         div.appendChild(element);
       }
-      print_window.document.body.appendChild(div);
+      multi_all.push(div);
     }
+  }
+  let print_window = window.open('','','width=800,height=600');
+  print_window.document.title = 'Print';
+  let style = document.createElement('style');
+  style.textContent = print_style;
+  print_window.document.head.appendChild(style);
+  for (const element of multi_all) {
+    print_window.document.body.appendChild(element);
   }
   print_window.document.close();
   print_window.focus();
