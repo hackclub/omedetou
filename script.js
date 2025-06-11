@@ -86,6 +86,10 @@ function print_out (content) {
   print_window.close();
 }
 
+document.querySelector('.kell-content').addEventListener('input', function () {
+  localStorage.setItem('content', editor.content);
+});
+
 document.getElementById('csv_file_input').addEventListener('change', e => {
   const reader = new FileReader();
   reader.onload = function (e2) {
@@ -103,4 +107,8 @@ document.getElementById('upload_csv').onclick = function () {
 
 document.getElementById('print').onclick = function () {
   print_out(editor.content);
+}
+
+if (localStorage.getItem('content') !== null) {
+  editor.content = localStorage.getItem('content');
 }
