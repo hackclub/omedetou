@@ -66,19 +66,43 @@ function read_csv (s) {
 }
 
 function print_out (content) {
-  try {
-    compile(content); // populates `all`
-  } catch (e) {
-    document.getElementById('error').textContent = `error: ${e.message}`;
-    return;
-  }
   let print_window = window.open('','','width=800,height=600');
   print_window.document.title = 'Print';
   let style = document.createElement('style');
   style.textContent = print_style;
   print_window.document.head.appendChild(style);
-  for (const element of all) {
-    print_window.document.body.appendChild(element);
+  // single note
+  if (csv_data === undefined) {
+    try {
+      compile(content); // populates `all`
+    } catch (e) {
+      document.getElementById('error').textContent = `error: ${e.message}`;
+      return;
+    }
+    for (const element of all) {
+      print_window.document.body.appendChild(element);
+    }
+  }
+  // multiple notes
+  else {
+    for (let r = 0; r < csv_data.length; r++) {
+      // TODO: inefficient?
+      try {
+        compile(content); // populates `all`
+      } catch (e) {
+        document.getElementById('error').textContent = `error: ${e.message}`;
+        return;
+      }
+      const row = csv_data[r];
+      const div = document.createElement('div');
+      if (r > 0) {
+        div.classList.add('page_break');
+      }
+      for (const element of all) {
+        div.appendChild(element);
+      }
+      print_window.document.body.appendChild(div);
+    }
   }
   print_window.document.close();
   print_window.focus();
