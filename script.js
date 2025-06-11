@@ -2,6 +2,7 @@ const editor = kell('editor', document.getElementById('editor_container'));
 
 let csv_name;
 let csv_data;
+let csv_row;
 
 async function get_text (url) {
   const response = await fetch(url, { cache: 'no-cache' });
@@ -23,7 +24,16 @@ let all = [];
 const rules = {
   say: i => {
     active = document.createElement('p');
-    active.textContent = i;
+    active.textContent = i
+      .replaceAll(/{(.+?)}/g, (match, group) => {
+        if (csv_row === undefined) {
+          throw new Error('no csv');
+        }
+        if (csv_row[group] === undefined) {
+          throw new Error(`no column "${group}" in csv`);
+        }
+        return csv_row[group];
+      });
     return active;
   },
 }
@@ -46,7 +56,12 @@ function compile (s) {
     if (rule_function === undefined) {
       throw new Error(`no rule "${rule}"`);
     }
-    const result = rule_function(i);
+    let result;
+    try {
+      result = rule_function(i);
+    } catch (e) {
+      throw e;
+    }
     all.push(result);
   }
 }
@@ -82,6 +97,7 @@ function print_out (content) {
   // multiple notes
   else {
     for (let r = 0; r < csv_data.length; r++) {
+      csv_row = csv_data[r];
       // TODO: inefficient?
       try {
         compile(content); // populates `all`
@@ -89,7 +105,6 @@ function print_out (content) {
         document.getElementById('error').textContent = `error: ${e.message}`;
         return;
       }
-      const row = csv_data[r];
       const div = document.createElement('div');
       if (r > 0) {
         div.classList.add('page_break');
