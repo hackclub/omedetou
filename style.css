@@ -30,6 +30,15 @@ h1 {
   text-align:center;
 }
 
+main {
+  width:400px;
+}
+
+main p {
+  font-size:12px;
+  text-align:left;
+}
+
 ruby {
   font-weight:400;
   font-size:18px;
@@ -69,6 +78,11 @@ button:hover {
 
 #editor {
   height:150px;
+}
+
+#upload_csv {
+  --button-bg:#e4ab1b;
+  --button-bg-hover:#e29f00;
 }
 
 #print {
