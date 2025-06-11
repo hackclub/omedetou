@@ -1,4 +1,4 @@
-// const editor = kell('editor', document.getElementById('editor_container'));
+const editor = kell('editor', document.getElementById('editor_container'));
 
 let csv_name;
 let csv_data;
@@ -17,6 +17,33 @@ get_text('./print_style.css').then(text => {
   print_style = text;
 })
 
+let active = undefined;
+let all = [];
+
+const rules = {
+  say: i => {
+    active = document.createElement('p');
+    active.textContent = i;
+    return active;
+  },
+}
+
+function compile (s) {
+  active = undefined;
+  all = [];
+  const lines = s.split('\n');
+  for (const line of lines) {
+    if (line === '') {
+      continue;
+    }
+    const rule = line.split(' ')[0];
+    const i = line.split(' ').slice(1).join(' ');
+    // TODO: validity check
+    const result = rules[rule](i);
+    all.push(result);
+  }
+}
+
 function read_csv (s) {
   const intermediate = CSV.parse(s);
   let columns = intermediate.shift();
@@ -31,15 +58,16 @@ function read_csv (s) {
   return result;
 }
 
-function print_out () {
+function print_out (content) {
   let print_window = window.open('','','width=800,height=600');
   print_window.document.title = 'Print';
   let style = document.createElement('style');
   style.textContent = print_style;
   print_window.document.head.appendChild(style);
-  let p = document.createElement('p');
-  p.textContent = 'omedetou';
-  print_window.document.body.appendChild(p);
+  compile(content); // populates `all`
+  for (const element of all) {
+    print_window.document.body.appendChild(element);
+  }
   print_window.document.close();
   print_window.focus();
   print_window.print();
@@ -62,5 +90,5 @@ document.getElementById('upload_csv').onclick = function () {
 }
 
 document.getElementById('print').onclick = function () {
-  print_out();
+  print_out(editor.content);
 }

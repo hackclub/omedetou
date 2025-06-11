@@ -78,6 +78,7 @@ button:hover {
 
 #editor {
   height:150px;
+  margin-bottom:8px;
 }
 
 #upload_csv {
@@ -88,4 +89,8 @@ button:hover {
 #print {
   --button-bg:#37cbe8;
   --button-bg-hover:#35c5d1;
+}
+
+.kell-content {
+  font-size:12px;
 }
