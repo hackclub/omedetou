@@ -91,6 +91,10 @@ button:hover {
   --button-bg-hover:#35c5d1;
 }
 
+#error {
+  color:#ff4586;
+}
+
 .kell-content {
   font-size:12px;
 }

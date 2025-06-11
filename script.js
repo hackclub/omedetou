@@ -31,6 +31,10 @@ const rules = {
 function compile (s) {
   active = undefined;
   all = [];
+  document.getElementById('error').textContent = '';
+  if (s === '') {
+    throw new Error('there is nothing to do');
+  }
   const lines = s.split('\n');
   for (const line of lines) {
     if (line === '') {
@@ -38,8 +42,11 @@ function compile (s) {
     }
     const rule = line.split(' ')[0];
     const i = line.split(' ').slice(1).join(' ');
-    // TODO: validity check
-    const result = rules[rule](i);
+    const rule_function = rules[rule];
+    if (rule_function === undefined) {
+      throw new Error(`no rule "${rule}"`);
+    }
+    const result = rule_function(i);
     all.push(result);
   }
 }
@@ -59,12 +66,17 @@ function read_csv (s) {
 }
 
 function print_out (content) {
+  try {
+    compile(content); // populates `all`
+  } catch (e) {
+    document.getElementById('error').textContent = `error: ${e.message}`;
+    return;
+  }
   let print_window = window.open('','','width=800,height=600');
   print_window.document.title = 'Print';
   let style = document.createElement('style');
   style.textContent = print_style;
   print_window.document.head.appendChild(style);
-  compile(content); // populates `all`
   for (const element of all) {
     print_window.document.body.appendChild(element);
   }
