@@ -99,6 +99,11 @@ button:hover {
   --button-bg-hover:#e29f00;
 }
 
+#font {
+  --button-bg:#ef9b00;
+  --button-bg-hover:#ed8400;
+}
+
 #print {
   --button-bg:#37cbe8;
   --button-bg-hover:#35c5d1;

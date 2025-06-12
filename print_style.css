@@ -1,8 +1,15 @@
 p {
   font-size:24px;
-  font-family:sans-serif;
 }
 
 .page_break {
   break-before:page;
+}
+
+.font-1 {
+  font-family:sans-serif;
+}
+
+.font-2 {
+  font-family: "Comic Neue";
 }

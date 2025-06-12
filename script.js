@@ -18,6 +18,9 @@ get_text('./print_style.css').then(text => {
   print_style = text;
 })
 
+let max_fonts = 2;
+let font = 1;
+
 let active = undefined;
 let all = [];
 
@@ -82,6 +85,7 @@ function read_csv (s) {
 
 function print_out (content) {
   let multi_all = [];
+  // TODO: DRY
   // single note
   if (csv_data === undefined) {
     try {
@@ -90,9 +94,12 @@ function print_out (content) {
       document.getElementById('error').textContent = `error: ${e.message}`;
       return;
     }
+    const div = document.createElement('div');
+    div.classList.add(`font-${font}`);
     for (const element of all) {
-      multi_all.push(element);
+      div.appendChild(element);
     }
+    multi_all.push(div);
   }
   // multiple notes
   else {
@@ -106,6 +113,7 @@ function print_out (content) {
         return;
       }
       const div = document.createElement('div');
+      div.classList.add(`font-${font}`);
       if (r > 0) {
         div.classList.add('page_break');
       }
@@ -117,16 +125,52 @@ function print_out (content) {
   }
   let print_window = window.open('','','width=800,height=600');
   print_window.document.title = 'Print';
+
+  // FIXME: this is Cursor's doing
+  const fontPromise = new Promise((resolve) => {
+    let googleapis = document.createElement('link');
+    googleapis.setAttribute('rel', 'preconnect');
+    googleapis.setAttribute('href', 'https://fonts.googleapis.com');
+    print_window.document.head.appendChild(googleapis);
+
+    let gstatic = document.createElement('link');
+    gstatic.setAttribute('rel', 'preconnect');
+    gstatic.setAttribute('href', 'https://fonts.gstatic.com');
+    gstatic.setAttribute('crossorigin', '');
+    print_window.document.head.appendChild(gstatic);
+
+    let fonts = document.createElement('link');
+    fonts.setAttribute('rel', 'stylesheet');
+    fonts.setAttribute('href', 'https://fonts.googleapis.com/css2?family=Comic+Neue:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+    fonts.onload = () => {
+      // Wait for the font to be fully loaded and ready
+      print_window.document.fonts.ready.then(() => {
+        // Force a repaint to ensure the font is applied
+        print_window.document.body.style.display = 'none';
+        print_window.document.body.offsetHeight; // Force reflow
+        print_window.document.body.style.display = '';
+        resolve();
+      });
+    };
+    print_window.document.head.appendChild(fonts);
+  });
+
   let style = document.createElement('style');
   style.textContent = print_style;
   print_window.document.head.appendChild(style);
+
   for (const element of multi_all) {
     print_window.document.body.appendChild(element);
   }
+
   print_window.document.close();
   print_window.focus();
-  print_window.print();
-  print_window.close();
+
+  // Wait for fonts to load before printing
+  fontPromise.then(() => {
+    print_window.print();
+    print_window.close();
+  });
 }
 
 document.querySelector('.kell-content').addEventListener('input', function () {
@@ -146,6 +190,15 @@ document.getElementById('csv_file_input').addEventListener('change', e => {
 
 document.getElementById('upload_csv').onclick = function () {
   document.getElementById('csv_file_input').click();
+}
+
+document.getElementById('font').onclick = function () {
+  if (font === max_fonts) {
+    font = 1;
+  } else {
+    font += 1;
+  }
+  document.getElementById('font').textContent = `font ${font}`;
 }
 
 document.getElementById('print').onclick = function () {
