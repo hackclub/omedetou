@@ -21,10 +21,23 @@ get_text('./print_style.css').then(text => {
 let max_fonts = 2;
 let font = 1;
 
+let mod = [];
 let active = undefined;
 let all = [];
 
 const rules = {
+  align: i => (a, mi = i) => {
+    // TODO: force single
+    switch (mi) {
+      case 'left':
+      case 'center':
+      case 'right':
+        a.classList.add(mi);
+        break;
+      default:
+        throw new Error(`invalid align "${mi}"`);
+    }
+  },
   say: i => {
     active = document.createElement('p');
     active.textContent = i
@@ -65,7 +78,15 @@ function compile (s) {
     } catch (e) {
       throw e;
     }
-    all.push(result);
+    if (result.constructor.name === 'Function') {
+      mod.push(result);
+    } else {
+      mod.forEach(F => {
+        F(result);
+      });
+      mod = [];
+      all.push(result);
+    }
   }
 }
 
