@@ -5,6 +5,7 @@ let csv_data;
 let csv_row;
 
 let svg_names = [];
+let svg_raws = [];
 let svg_srcs = [];
 
 async function get_text (url) {
@@ -25,6 +26,7 @@ let max_fonts = 2;
 let font = 1;
 
 let mod = [];
+let recolor = [];
 let active = undefined;
 let all = [];
 
@@ -57,13 +59,52 @@ const rules = {
   },
   svg: i => {
     active = document.createElement('img');
-    if (svg_srcs.length === 0) {
+    active.onload = function () {
+      console.log(`loaded ${svg_names[Number(index)]}`);
+    }
+    let index = i.split(' ')[0];
+    let rf = i.split(' ')[1];
+    let rt = i.split(' ').slice(2).join(' ');
+    rt = rt.replaceAll(/{(.+?)}/g, (match, group) => {
+      if (csv_row === undefined) {
+        throw new Error('no csv');
+      }
+      if (csv_row[group] === undefined) {
+        throw new Error(`no column "${group}" in csv`);
+      }
+      return csv_row[group];
+    });
+    if (!rf.match(/^[0-9a-fA-F]{6}$/)) {
+      throw new Error(`invalid color "${rf}"`);
+    }
+    if (!rt.match(/^[0-9a-fA-F]{6}$/)) {
+      throw new Error(`invalid color "${rt}"`);
+    }
+    if (svg_raws.length === 0) {
       throw new Error("no svg's");
     }
-    if (svg_srcs[Number(i)] === undefined) {
-      throw new Error(`invalid svg index "${i}"`);
+    if (svg_raws[Number(index)] === undefined) {
+      throw new Error(`invalid svg index "${index}"`);
     }
-    active.src = svg_srcs[Number(i)];
+    let raw = svg_raws[Number(index)];
+    if (rf !== undefined && rt === undefined) {
+      throw new Error(`incomplete replacement`);
+    }
+    if (rf !== undefined && rt !== undefined) {
+      raw = raw.replaceAll(rf, rt);
+    }
+    const blob = new Blob([raw], { type: 'image/svg+xml' });
+    const dataURL = URL.createObjectURL(blob);
+    const imageLoadPromise = new Promise((resolve, reject) => {
+      active.onerror = function () {
+        throw new Error('promise failed (hit "print" again?)');
+      }
+      active.onload = function () {
+        resolve();
+      }
+      active.src = dataURL;
+    });
+    active._imageLoadPromise = imageLoadPromise;
     return active;
   },
   width: i => (a, mi = i) => {
@@ -80,6 +121,7 @@ const rules = {
 
 function compile (s) {
   mod = [];
+  // recolor = [];
   active = undefined;
   all = [];
   document.getElementById('error').textContent = '';
@@ -106,10 +148,14 @@ function compile (s) {
     if (result.constructor.name === 'Function') {
       mod.push(result);
     } else {
-      mod.forEach(F => {
+      // mod.forEach(F => {
+      //   F(result);
+      // });
+      for (const F of mod) {
         F(result);
-      });
+      }
       mod = [];
+      recolor = [];
       all.push(result);
     }
   }
@@ -169,53 +215,65 @@ function print_out (content) {
       multi_all.push(div);
     }
   }
-  let print_window = window.open('','','width=800,height=600');
-  print_window.document.title = 'Print';
 
-  // FIXME: this is Cursor's doing
-  const fontPromise = new Promise((resolve) => {
-    let googleapis = document.createElement('link');
-    googleapis.setAttribute('rel', 'preconnect');
-    googleapis.setAttribute('href', 'https://fonts.googleapis.com');
-    print_window.document.head.appendChild(googleapis);
-
-    let gstatic = document.createElement('link');
-    gstatic.setAttribute('rel', 'preconnect');
-    gstatic.setAttribute('href', 'https://fonts.gstatic.com');
-    gstatic.setAttribute('crossorigin', '');
-    print_window.document.head.appendChild(gstatic);
-
-    let fonts = document.createElement('link');
-    fonts.setAttribute('rel', 'stylesheet');
-    fonts.setAttribute('href', 'https://fonts.googleapis.com/css2?family=Comic+Neue:ital,wght@0,400;0,700;1,400;1,700&display=swap');
-    fonts.onload = () => {
-      // Wait for the font to be fully loaded and ready
-      print_window.document.fonts.ready.then(() => {
-        // Force a repaint to ensure the font is applied
-        print_window.document.body.style.display = 'none';
-        print_window.document.body.offsetHeight; // Force reflow
-        print_window.document.body.style.display = '';
-        resolve();
-      });
-    };
-    print_window.document.head.appendChild(fonts);
-  });
-
-  let style = document.createElement('style');
-  style.textContent = print_style;
-  print_window.document.head.appendChild(style);
-
+  // Collect all image load promises from canvas elements
+  const imageLoadPromises = [];
   for (const element of multi_all) {
-    print_window.document.body.appendChild(element);
+    const canvases = element.querySelectorAll('canvas');
+    for (const canvas of canvases) {
+      if (canvas._imageLoadPromise) {
+        imageLoadPromises.push(canvas._imageLoadPromise);
+      }
+    }
   }
 
-  print_window.document.close();
-  print_window.focus();
+  // Wait for all images to load before opening the print window
+  Promise.all(imageLoadPromises).then(() => {
+    let print_window = window.open('','','width=800,height=600');
+    print_window.document.title = 'Print';
 
-  // Wait for fonts to load before printing
-  fontPromise.then(() => {
-    print_window.print();
-    print_window.close();
+    // FIXME: this is Cursor's doing
+    const fontPromise = new Promise((resolve) => {
+      let googleapis = document.createElement('link');
+      googleapis.setAttribute('rel', 'preconnect');
+      googleapis.setAttribute('href', 'https://fonts.googleapis.com');
+      print_window.document.head.appendChild(googleapis);
+
+      let gstatic = document.createElement('link');
+      gstatic.setAttribute('rel', 'preconnect');
+      gstatic.setAttribute('href', 'https://fonts.gstatic.com');
+      gstatic.setAttribute('crossorigin', '');
+      print_window.document.head.appendChild(gstatic);
+
+      let fonts = document.createElement('link');
+      fonts.setAttribute('rel', 'stylesheet');
+      fonts.setAttribute('href', 'https://fonts.googleapis.com/css2?family=Comic+Neue:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+      fonts.onload = () => {
+        // Wait for the font to be fully loaded and ready
+        print_window.document.fonts.ready.then(() => {
+          // Force a repaint to ensure the font is applied
+          print_window.document.body.style.display = 'none';
+          print_window.document.body.offsetHeight; // Force reflow
+          print_window.document.body.style.display = '';
+          resolve();
+        });
+      };
+      print_window.document.head.appendChild(fonts);
+    });
+
+    let style = document.createElement('style');
+    style.textContent = print_style;
+    print_window.document.head.appendChild(style);
+
+    for (const element of multi_all) {
+      print_window.document.body.appendChild(element);
+    }
+
+    // Wait for fonts to load before printing
+    fontPromise.then(() => {
+      print_window.print();
+      print_window.close();
+    });
   });
 }
 
@@ -246,17 +304,18 @@ document.getElementById('svg_file_input').addEventListener('change', e => {
     const reader = new FileReader();
     reader.onload = function (e2) {
       // Get the text content
-      let svgText = e2.target.result;
-
-      // Perform string replacement
-      svgText = svgText.replaceAll('ABC', 'XYZ');
-
-      // Convert to data URL
-      const svgBlob = new Blob([svgText], { type: 'image/svg+xml' });
-      const dataURL = URL.createObjectURL(svgBlob);
-
+      // let svgText = e2.target.result;
       svg_names.push(files[i].name);
-      svg_srcs.push(dataURL);
+      svg_raws.push(e2.target.result);
+
+      // // Perform string replacement
+      // svgText = svgText.replaceAll('c7e916', '8c27eb');
+
+      // // Convert to data URL
+      // const svgBlob = new Blob([svgText], { type: 'image/svg+xml' });
+      // const dataURL = URL.createObjectURL(svgBlob);
+
+      // svg_srcs.push(dataURL);
 
       filesLoaded++;
 
