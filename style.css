@@ -95,18 +95,24 @@ button:hover {
 }
 
 #upload_csv {
+  --button-bg:#ef9b00;
+  --button-bg-hover:#ed8400;
+}
+
+#upload_svgs {
   --button-bg:#e4ab1b;
   --button-bg-hover:#e29f00;
 }
 
 #font {
-  --button-bg:#ef9b00;
-  --button-bg-hover:#ed8400;
+  --button-bg:#37cbe8;
+  --button-bg-hover:#35c5d1;
 }
 
 #print {
-  --button-bg:#37cbe8;
-  --button-bg-hover:#35c5d1;
+  --button-bg:#9146dc;
+  --button-bg-hover:#9035c0;
+  color:white;
 }
 
 #error {

@@ -4,6 +4,9 @@ let csv_name;
 let csv_data;
 let csv_row;
 
+let svg_names = [];
+let svg_srcs = [];
+
 async function get_text (url) {
   const response = await fetch(url, { cache: 'no-cache' });
   let text;
@@ -52,9 +55,31 @@ const rules = {
       });
     return active;
   },
+  svg: i => {
+    active = document.createElement('img');
+    if (svg_srcs.length === 0) {
+      throw new Error("no svg's");
+    }
+    if (svg_srcs[Number(i)] === undefined) {
+      throw new Error(`invalid svg index "${i}"`);
+    }
+    active.src = svg_srcs[Number(i)];
+    return active;
+  },
+  width: i => (a, mi = i) => {
+    if (Number.isNaN(Number(mi))) {
+      throw new Error(`${mi} is not a number`);
+    }
+    if (Number(mi) % 1 !== 0) {
+      throw new Error(`${mi} is not whole`);
+    }
+    a.style.width = mi + 'px';
+    a.style.height = 'auto';
+  },
 }
 
 function compile (s) {
+  mod = [];
   active = undefined;
   all = [];
   document.getElementById('error').textContent = '';
@@ -209,8 +234,47 @@ document.getElementById('csv_file_input').addEventListener('change', e => {
   reader.readAsText(e.target.files[0]);
 }, false);
 
+document.getElementById('svg_file_input').addEventListener('change', e => {
+  svg_names = [];
+  svg_srcs = [];
+  // FIXME: this is also Cursor's doing
+  const files = e.target.files;
+  const fileCount = files.length;
+  let filesLoaded = 0;
+
+  for (let i = 0; i < fileCount; i++) {
+    const reader = new FileReader();
+    reader.onload = function (e2) {
+      // Get the text content
+      let svgText = e2.target.result;
+
+      // Perform string replacement
+      svgText = svgText.replaceAll('ABC', 'XYZ');
+
+      // Convert to data URL
+      const svgBlob = new Blob([svgText], { type: 'image/svg+xml' });
+      const dataURL = URL.createObjectURL(svgBlob);
+
+      svg_names.push(files[i].name);
+      svg_srcs.push(dataURL);
+
+      filesLoaded++;
+
+      if (filesLoaded === fileCount) {
+        document.getElementById('svgs').textContent = `svgs: ${svg_names.map((x, i) => `${x} (${i})`).join(', ')}`;
+      }
+    }
+    // Read as text instead of data URL
+    reader.readAsText(files[i]);
+  }
+}, false);
+
 document.getElementById('upload_csv').onclick = function () {
   document.getElementById('csv_file_input').click();
+}
+
+document.getElementById('upload_svgs').onclick = function () {
+  document.getElementById('svg_file_input').click();
 }
 
 document.getElementById('font').onclick = function () {
