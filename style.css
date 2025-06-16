@@ -52,6 +52,11 @@ a:hover {
   color:#444;
 }
 
+hr {
+  border-bottom:1px solid #ccc;
+  margin:0.5rem;
+}
+
 ruby {
   font-weight:400;
   font-size:18px;
@@ -121,4 +126,40 @@ button:hover {
 
 .kell-content {
   font-size:12px;
+}
+
+.section {
+  text-transform:uppercase;
+  font-size:10px;
+  color:#888;
+  margin-top:3px;
+}
+
+.l {
+  color:#71ac7f;
+}
+
+.p1 {
+  color:#71a3ac;
+}
+
+.p2 {
+  color:#9f71ac;
+}
+
+.p3 {
+  color:#ac7180;
+}
+
+.s {
+  color:#ef9b00;
+  font-weight:bold;
+}
+
+.or {
+  color:#bbb;
+}
+
+.b {
+  color:#999;
 }
