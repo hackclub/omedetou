@@ -63,8 +63,8 @@ const rules = {
       console.log(`loaded ${svg_names[Number(index)]}`);
     }
     let index = i.split(' ')[0];
-    let rf = i.split(' ')[1];
-    let rt = i.split(' ').slice(2).join(' ');
+    let rf = i.split(' ')[1] || '';
+    let rt = i.split(' ').slice(2).join(' ') || '';
     rt = rt.replaceAll(/{(.+?)}/g, (match, group) => {
       if (csv_row === undefined) {
         throw new Error('no csv');
@@ -74,12 +74,6 @@ const rules = {
       }
       return csv_row[group];
     });
-    if (!rf.match(/^[0-9a-fA-F]{6}$/)) {
-      throw new Error(`invalid color "${rf}"`);
-    }
-    if (!rt.match(/^[0-9a-fA-F]{6}$/)) {
-      throw new Error(`invalid color "${rt}"`);
-    }
     if (svg_raws.length === 0) {
       throw new Error("no svg's");
     }
@@ -87,10 +81,16 @@ const rules = {
       throw new Error(`invalid svg index "${index}"`);
     }
     let raw = svg_raws[Number(index)];
-    if (rf !== undefined && rt === undefined) {
+    if (rf !== '' && rt === '') {
       throw new Error(`incomplete replacement`);
     }
-    if (rf !== undefined && rt !== undefined) {
+    if (rf !== '' && !rf.match(/^[0-9a-fA-F]{6}$/)) {
+      throw new Error(`invalid color "${rf}"`);
+    }
+    if (rt !== '' && !rt.match(/^[0-9a-fA-F]{6}$/)) {
+      throw new Error(`invalid color "${rt}"`);
+    }
+    if (rf !== '' && rt !== '') {
       raw = raw.replaceAll(rf, rt);
     }
     const blob = new Blob([raw], { type: 'image/svg+xml' });
