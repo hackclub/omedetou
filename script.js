@@ -43,6 +43,16 @@ const rules = {
         throw new Error(`invalid align "${mi}"`);
     }
   },
+  as: i => (a, mi = i) => {
+    // TODO: force single
+    switch (mi) {
+      case 'small':
+        a.classList.add(mi);
+        break;
+      default:
+        throw new Error(`invalid class "${mi}"`);
+    }
+  },
   say: i => {
     active = document.createElement('p');
     active.textContent = i
