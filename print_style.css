@@ -2,6 +2,11 @@ p {
   font-size:24px;
 }
 
+a {
+  color:#72cff7;
+  text-decoration:underline;
+}
+
 .page_break {
   break-before:page;
 }

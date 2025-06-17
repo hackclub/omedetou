@@ -65,6 +65,10 @@ const rules = {
         }
         return csv_row[group];
       });
+    active.innerHTML = active.innerHTML
+      .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+      .replace(/\*(.+?)\*/g, '<i>$1</i>')
+      .replace(/\[(.+?)\]/g, '<a>$1</a>');
     return active;
   },
   svg: i => {
